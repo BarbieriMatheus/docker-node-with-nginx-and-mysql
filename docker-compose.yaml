@@ -1,0 +1,50 @@
+version: "3"
+
+services:
+  app-node:
+    build:
+      context: node
+    networks:
+      - applications-network
+    volumes:
+      - ./node:/usr/src/app
+    container_name: app-node
+    # entrypoint: dockerize -wait tcp://db-mysql:3306 -timeout 20s docker-entrypoint.sh
+    tty: true
+    ports:
+      # Settings ports on node is not needed to nginx because nginx connect on node by container's name
+      - "3000:3000"
+    depends_on:
+      - db-mysql
+
+  db-mysql:
+    image: mysql:5.7
+    command: --innodb-use-native-aio=0
+    container_name: db-mysql
+    restart: always
+    tty: true
+    volumes:
+      - ./mysql:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=nodedb
+      - MYSQL_ROOT_PASSWORD=root
+    networks:
+      - applications-network
+
+  nginx:
+    build:
+      context: ./nginx
+    container_name: nginx
+    networks:
+      - applications-network
+    ports:
+      - 8080:80
+    restart: always
+    tty: true
+    depends_on:
+      - app-node
+
+networks:
+  applications-network:
+    driver: bridge
+# docker-compose up -d --build
