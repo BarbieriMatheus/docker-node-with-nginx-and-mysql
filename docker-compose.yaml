@@ -3,13 +3,13 @@ version: "3"
 services:
   app-node:
     build:
-      context: node
+      context: ./node
     networks:
       - applications-network
     volumes:
       - ./node:/usr/src/app
     container_name: app-node
-    # entrypoint: dockerize -wait tcp://db-mysql:3306 -timeout 20s docker-entrypoint.sh
+    entrypoint: wait-for db-mysql:3306 -t 40 -- sh -c "npm install && npm start"
     tty: true
     ports:
       # Settings ports on node is not needed to nginx because nginx connect on node by container's name
